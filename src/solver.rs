@@ -94,34 +94,8 @@ impl Solver {
             max_energy_at_departure,
         ) = self._compute_bounds(&nodes_gpr);
 
-        // FrvcpAlgo takes ownership, so reconstruct the instance.
         let mut label_algo = FrvcpAlgo::new(
-            FrvcpInstance::new(RawInstance {
-                max_q: self.instance.max_q,
-                t_max: Some(self.instance.t_max),
-                css: self
-                    .instance
-                    .cs_details
-                    .iter()
-                    .map(|cs| crate::core::RawCsDetail {
-                        node_id: cs.node_id,
-                        cs_type: cs.cs_type,
-                    })
-                    .collect(),
-                process_times: Some(self.instance.process_times.clone()),
-                breakpoints_by_type: self
-                    .instance
-                    .cs_bkpt_info
-                    .values()
-                    .map(|info| crate::core::RawBreakpoint {
-                        cs_type: info.cs_type,
-                        time: info.time.clone(),
-                        charge: info.charge.clone(),
-                    })
-                    .collect(),
-                energy_matrix: self.instance.energy_matrix.clone(),
-                time_matrix: self.instance.time_matrix.clone(),
-            }),
+            self.instance.clone(),
             self.q_init,
             nodes_gpr,
             adjacencies,
