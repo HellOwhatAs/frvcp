@@ -113,6 +113,52 @@ class TestFrvcpAlgo(unittest.TestCase):
             obj, _ = frvcp_solver.solve()
             self.assertAlmostEqual(obj, rte_info['obj'], 3)
 
+    def test_destination_no_min_energy(self):
+        """When max_q is sufficient, no charging should be needed."""
+        import math
+        frvcp_instance = {
+            'max_q': 4, 't_max': math.inf,
+            'css': [{'node_id': 4, 'cs_type': 0}],
+            'process_times': [0, 0.5, 0.5, 0.5, 0],
+            'breakpoints_by_type': [{'cs_type': 0, 'time': [0.0, 0.31, 0.39, 0.51],
+                                     'charge': [0.0, 13600.0, 15200.0, 16000.0]}],
+            'energy_matrix': [[0.0, 1.0, 2.0, 0.0, 2.0],
+                              [1.0, 0.0, 1.0, 1.0, 1.0],
+                              [2.0, 1.0, 0.0, 2.0, 0.0],
+                              [0.0, 1.0, 2.0, 0.0, 2.0],
+                              [2.0, 1.0, 0.0, 2.0, 0.0]],
+            'time_matrix': [[0]*5 for _ in range(5)]
+        }
+        route = [0, 1, 2, 3]
+        q_init = frvcp_instance['max_q']
+        frvcp_solver = solver.Solver(frvcp_instance, route, q_init, multi_insert=False)
+        duration, feas_route = frvcp_solver.solve()
+        self.assertEqual(feas_route, [(0, None), (1, None), (2, None), (3, None)])
+
+    def test_destination_cs_detour_feasibility(self):
+        """When max_q is slightly less than total energy, charging at a nearby CS
+        should make the route feasible."""
+        import math
+        frvcp_instance = {
+            'max_q': 3.9, 't_max': math.inf,
+            'css': [{'node_id': 4, 'cs_type': 0}],
+            'process_times': [0, 0.5, 0.5, 0.5, 0],
+            'breakpoints_by_type': [{'cs_type': 0, 'time': [0.0, 0.31, 0.39, 0.51],
+                                     'charge': [0.0, 13600.0, 15200.0, 16000.0]}],
+            'energy_matrix': [[0.0, 1.0, 2.0, 0.0, 2.0],
+                              [1.0, 0.0, 1.0, 1.0, 1.0],
+                              [2.0, 1.0, 0.0, 2.0, 0.0],
+                              [0.0, 1.0, 2.0, 0.0, 2.0],
+                              [2.0, 1.0, 0.0, 2.0, 0.0]],
+            'time_matrix': [[0]*5 for _ in range(5)]
+        }
+        route = [0, 1, 2, 3]
+        q_init = frvcp_instance['max_q']
+        frvcp_solver = solver.Solver(frvcp_instance, route, q_init, multi_insert=False)
+        duration, feas_route = frvcp_solver.solve()
+        self.assertIsNotNone(feas_route)
+        self.assertTrue(duration < float('inf'))
+
 
 def runAll():
     """Runs all unittests

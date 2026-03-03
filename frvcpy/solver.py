@@ -92,6 +92,8 @@ class Solver():
         # below lists (until nodes_gpr) are of length (num_nodes_in_G)
         # List[float]
         min_soc_at_departure = self._compute_min_soc_at_departure()
+        # destination has no min energy requirement at departure
+        min_soc_at_departure[self._route[-1]] = 0.0
 
         # list[float]
         max_allowed_soc_at_arrival = self._compute_max_soc_at_arrival()
@@ -482,6 +484,9 @@ class Solver():
                 curr_id)
             max_energy_at_departure[i] = self.instance.max_q
             # endregion
+
+        # destination has no min energy requirement at departure
+        min_energy_at_departure[len(self._route)-1] = 0.0
 
         return (
             min_travel_time_after_node,
