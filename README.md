@@ -1,5 +1,5 @@
-# frvcpy: An Open-Source Solver for the FRVCP
-
+# frvcp: An Open-Source Solver for the FRVCP
+> This crate is a pure Rust implementation of [e-VRO/frvcpy](https://github.com/e-VRO/frvcpy).
 ### Fast optimal solutions to rich FRVCPs
 
 ## What is an FRVCP?
@@ -8,93 +8,94 @@ Given an electric vehicle (EV) that's been assigned some sequence of locations t
 
 ## Installation
 
-In a virtual environment with Python 3.6+, frvcpy can be installed via
+With [Rust and Cargo](https://www.rust-lang.org/tools/install) installed, build the project via
 
 ```bash
-pip install frvcpy
+cargo build --release
 ```
+
+The compiled binary will be at `target/release/frvcp`.
 
 ### Testing the installation
 
-```python
-import frvcpy.test
-frvcpy.test.runAll()
+```bash
+cargo test
+```
+
+## Using frvcp
+
+With a compatible instance file ([see the schema](https://github.com/e-VRO/frvcp/blob/master/instances/frvcpy-instance.schema.json)), solve the FRVCP from a Rust program:
+
+```rust
+use frvcp::solver::Solver;
+
+let route = vec![0, 40, 12, 33, 38, 16, 0]; // route to make energy feasible
+let q_init = 16000.0;                        // vehicle's initial energy level
+
+// using an existing instance from file
+let mut frvcp_solver = Solver::from_file("instances/frvcpy-instance.json", route, q_init, true);
+
+// run the algorithm
+let (duration, feas_route) = frvcp_solver.solve();
+
+// write solution to file
+frvcp_solver.write_solution("my-solution.xml", "frvcpy-instance");
+
+println!("Duration: {:.4}", duration);
+// Duration: 7.339
+
+println!("Energy-feasible route:\n{:?}", feas_route);
+// Energy-feasible route:
+// Some([(0, None), (40, None), (12, None), (33, None), (48, Some(6673.379615520617)), (38, None), (16, None), (0, None)])
 ```
 
 Or from the command line:
 
 ```bash
-frvcpy-test
-```
-
-## Using frvcpy
-
-With a compatible instance file ([see the schema](https://github.com/e-VRO/frvcpy/blob/master/instances/frvcpy-instance.schema.json)), solve the FRVCP from a Python script:
-
-```python
-from frvcpy import solver
-
-route = [0,40,12,33,38,16,0]        # route to make energy feasible
-q_init = 16000                      # vehicle's initial energy level
-
-# using an existing instance from file
-frvcp_solver = solver.Solver("instances/frvcpy-instance.json", route, q_init)
-
-# run the algorithm
-duration, feas_route = frvcp_solver.solve()
-
-# write solution to file
-frvcp_solver.write_solution("my-solution.xml", instance_name="frvcpy-instance")
-
-print(f"Duration: {duration:.4}")
-# Duration: 7.339
-
-print(f"Energy-feasible route:\n{feas_route}")
-# Energy-feasible route:
-# [(0, None), (40, None), (12, None), (33, None), (48, 6673.379615520617), (38, None), (16, None), (0, None)]
-```
-
-Or from the command line:
-
-```bash
-frvcpy --instance=instances/frvcpy-instance.json --route=0,40,12,33,38,16,0 --qinit=16000 --output=my-solution.xml
+frvcp --instance=instances/frvcpy-instance.json --route=0,40,12,33,38,16,0 --qinit=16000 --write --output=my-solution.xml
 # Duration: 7.339
 # Energy-feasible route:
-# [(0, None), (40, None), (12, None), (33, None), (48, 6673.379615520617), (38, None), (16, None), (0, None)]
+# [(0, None), (40, None), (12, None), (33, None), (48, Some(6673.379615520617)), (38, None), (16, None), (0, None)]
 ```
+
+Available CLI flags:
+
+| Flag | Description |
+|------|-------------|
+| `--instance` | Path to the instance file (JSON or XML) |
+| `--route` | Comma-separated node IDs defining the route |
+| `--qinit` | Initial energy level of the EV |
+| `--multi` | Allow multiple CSs between stops (default) |
+| `--one` | Allow only one CS between stops |
+| `--check-tri` | Verify triangle inequality holds for the instance |
+| `--write` / `-w` | Write solution to file |
+| `--output` / `-o` | Output filename (implies `--write`) |
 
 Solutions are written in the [VRP-REP](http://www.vrp-rep.org/) format for easy importing and visualization with the [VRP-REP Mapper](https://vrp-rep.github.io/mapper/) (_formal solution specification available [here](http://www.vrp-rep.org/resources.html)_).
 
-_Note: Example problem instances are available in the `instances` directory on the [project's homepage](https://github.com/e-VRO/frvcpy/). For easy access to the example files, we recommend cloning the repository._
+_Note: Example problem instances are available in the `instances` directory on the [project's homepage](https://github.com/e-VRO/frvcp/). For easy access to the example files, we recommend cloning the repository._
 
 ## Instance Translation
 
 Instance translation is available for some E-VRP instances formatted according to the VRP-REP specification (_available [here](http://www.vrp-rep.org/resources.html)_).
 
-Translation can be done with the Python API via
+Translation can be done with the Rust API via
 
-```python
-from frvcpy import translator
+```rust
+use frvcp::translator;
 
-# Option 1) write the translated instance to file
-translator.translate("instances/vrprep-instance.xml", to_filename="instances/my-new-instance.json")
+// Option 1) write the translated instance to file
+translator::translate_to_file("instances/vrprep-instance.xml", "instances/my-new-instance.json", true);
 
-# Option 2) make instance object to be passed directly to the solver
-frvcp_instance = translator.translate("instances/vrprep-instance.xml")
+// Option 2) get a RawInstance to pass directly to the solver
+let raw_instance = translator::translate("instances/vrprep-instance.xml", true);
 ```
 
-Or with the command line:
-
-```bash
-# from CLI, only option is to write translated instance to file
-frvcpy-translate instances/vrprep-instance.xml instances/my-new-instance.json
-```
-
-_Note: If an instance ending in ".xml" is passed to the solver, it is assumed to be a VRP-REP instance, and the solver will automatically attempt to translate it._
+_Note: If an instance ending in ".xml" is passed to the CLI, it is assumed to be a VRP-REP instance, and the solver will automatically attempt to translate it._
 
 ### Translation requirements for VRP-REP instances
 
-frvcpy's translator assumes VRP-REP instances are formatted similarly to the [Montoya et al. (2017) instances](http://vrp-rep.org/datasets/item/2016-0020.html):
+frvcp's translator assumes VRP-REP instances are formatted similarly to the [Montoya et al. (2017) instances](http://vrp-rep.org/datasets/item/2016-0020.html):
 
 - CSs are identified as `<node>` elements having attribute `type="2"`
 - Charging stations nodes have a `<custom>` child element which contains a `cs_type` element
@@ -102,7 +103,7 @@ frvcpy's translator assumes VRP-REP instances are formatted similarly to the [Mo
 - These `function` elements are part of a `charging_functions` element in a `vehicle_profile`'s `custom` element
 - The depot has node ID 0, the N customers have IDs {1, ..., N}, and the CSs have IDs {N+1, ..., N+C}
 
-A good example of such an instance is the [example VRP-REP instance in the repository](https://github.com/e-VRO/frvcpy/blob/master/instances/vrprep-instance.xml).
+A good example of such an instance is the [example VRP-REP instance in the repository](https://github.com/e-VRO/frvcp/blob/master/instances/vrprep-instance.xml).
 
 Here is a smaller example meeting these requirements:
 
@@ -171,7 +172,7 @@ Here is a smaller example meeting these requirements:
 
 ## The Solver
 
-To solve FRVCPs, frvcpy implements the labeling algorithm from Froger et al. (2019), providing optimal solutions in low runtime. The algorithm accommodates realistic problem features such as nonlinear charging functions, heterogeneous charging station technologies, and multiple CS visits between stops.
+To solve FRVCPs, frvcp implements the labeling algorithm from Froger et al. (2019), providing optimal solutions in low runtime. The algorithm accommodates realistic problem features such as nonlinear charging functions, heterogeneous charging station technologies, and multiple CS visits between stops.
 
 ## Additional information
 

@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/schema#",
     "title": "FRVCP Instance",
-    "description": "Instance suitable for use with frvcpy",
+    "description": "Instance suitable for use with frvcp",
     "type": "object",
     "properties": {
         "max_q": {
