@@ -2,6 +2,13 @@
 name = "frvcp"
 version = "0.1.0"
 edition = "2024"
+authors = ["HellOwhatAs <xjq701229@outlook.com>"]
+description = "A pure Rust implementation for solving the Fixed Route Vehicle Charging Problem (FRVCP), ported from frvcpy."
+repository = "https://github.com/HellOwhatAs/frvcp"
+readme = "README.md"
+license = "MIT"
+keywords = ["frvcp", "vrp", "combinatorial optimization", "rich vrp", "evrp"]
+categories = ["algorithms", "science"]
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
