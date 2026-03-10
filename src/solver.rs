@@ -32,6 +32,23 @@ impl Solver {
         }
     }
 
+    /// Create a new Solver from a `RawInstance`, optionally checking triangle inequality.
+    pub fn new_checked(
+        instance: RawInstance,
+        route: Vec<usize>,
+        q_init: f64,
+        multi_insert: bool,
+        check_tri: bool,
+    ) -> Self {
+        Solver {
+            instance: FrvcpInstance::new_checked(instance, check_tri),
+            q_init,
+            route,
+            multi_insert,
+            solution: None,
+        }
+    }
+
     /// Create a new Solver by loading a JSON instance file.
     pub fn from_file(
         filename: &str,
@@ -43,6 +60,20 @@ impl Solver {
         let raw: RawInstance =
             serde_json::from_str(&data).expect("Invalid instance JSON");
         Self::new(raw, route, q_init, multi_insert)
+    }
+
+    /// Create a new Solver by loading a JSON instance file, optionally checking triangle inequality.
+    pub fn from_file_checked(
+        filename: &str,
+        route: Vec<usize>,
+        q_init: f64,
+        multi_insert: bool,
+        check_tri: bool,
+    ) -> Self {
+        let data = fs::read_to_string(filename).expect("Unable to read instance file");
+        let raw: RawInstance =
+            serde_json::from_str(&data).expect("Invalid instance JSON");
+        Self::new_checked(raw, route, q_init, multi_insert, check_tri)
     }
 
     /// Solve the FRVCP defined by the instance, route, and initial energy.
@@ -423,5 +454,49 @@ impl Solver {
             min_energy_at_departure,
             max_energy_at_departure,
         )
+    }
+
+    /// Writes the current available solution to file in a simple XML format
+    /// compatible with the VRP-REP solution format.
+    ///
+    /// # Panics
+    /// Panics if no solution has been computed or no feasible solution was found.
+    pub fn write_solution(&self, filename: &str, instance_name: &str) {
+        let solution = self
+            .solution
+            .as_ref()
+            .expect("Trying to get solution for problem that has not yet been solved.");
+        let feas_route = solution
+            .1
+            .as_ref()
+            .expect("No feasible solution was found.");
+
+        let mut xml = String::new();
+        xml.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        xml.push_str(&format!(
+            "<solution instance=\"{}\">\n",
+            instance_name
+        ));
+        xml.push_str(&format!(
+            "  <route id=\"0\" initialcharge=\"{}\">\n",
+            self.q_init
+        ));
+        for stop in feas_route {
+            match stop.1 {
+                None => {
+                    xml.push_str(&format!("    <node id=\"{}\"/>\n", stop.0));
+                }
+                Some(charge) => {
+                    xml.push_str(&format!(
+                        "    <node id=\"{}\">\n      <charge>{}</charge>\n    </node>\n",
+                        stop.0, charge
+                    ));
+                }
+            }
+        }
+        xml.push_str("  </route>\n");
+        xml.push_str("</solution>\n");
+
+        fs::write(filename, &xml).expect("Unable to write solution file");
     }
 }

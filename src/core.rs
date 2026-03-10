@@ -9,7 +9,7 @@ const DEFAULT_T_MAX: f64 = 6e9;
 use std::fmt;
 use std::fs;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 // ───────────────────── OrdF64 ─────────────────────
 
@@ -471,20 +471,20 @@ impl LabelHeap {
 
 // ───────────────────── Serde raw types ─────────────────────
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct RawCsDetail {
     pub node_id: usize,
     pub cs_type: usize,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct RawBreakpoint {
     pub cs_type: usize,
     pub time: Vec<f64>,
     pub charge: Vec<f64>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct RawInstance {
     pub max_q: f64,
     pub t_max: Option<f64>,
@@ -642,6 +642,40 @@ impl FrvcpInstance {
             cs_id_to_type,
             nodes_g,
         }
+    }
+
+    /// Build an instance from deserialized raw data, optionally checking
+    /// that the triangle inequality holds for both the energy and time matrices.
+    pub fn new_checked(instance: RawInstance, check_tri: bool) -> Self {
+        let inst = Self::new(instance);
+        if check_tri {
+            if !inst.triangle_inequality_holds(&inst.energy_matrix) {
+                panic!("The triangle inequality does not hold for the instance's energy_matrix.");
+            }
+            if !inst.triangle_inequality_holds(&inst.time_matrix) {
+                panic!("The triangle inequality does not hold for the instance's time_matrix.");
+            }
+        }
+        inst
+    }
+
+    /// Verifies that the triangle inequality holds for the given square matrix.
+    pub fn triangle_inequality_holds(&self, matrix: &[Vec<f64>]) -> bool {
+        let n = matrix.len();
+        assert!(
+            matrix.iter().all(|row| row.len() == n),
+            "Matrix must be square."
+        );
+        for i in 0..n {
+            for j in 0..n {
+                for k in 0..n {
+                    if matrix[i][k] + matrix[k][j] < matrix[i][j] {
+                        return false;
+                    }
+                }
+            }
+        }
+        true
     }
 
     /// Calculates the energy needed to get from `node_id` to the nearest CS.
