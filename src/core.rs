@@ -5,7 +5,7 @@ use std::cmp::Reverse;
 use std::collections::{BinaryHeap, HashMap};
 
 /// Default maximum route duration when not specified in the instance.
-const DEFAULT_T_MAX: f64 = 6e9;
+const DEFAULT_T_MAX: f64 = f64::INFINITY;
 use std::fmt;
 use std::fs;
 

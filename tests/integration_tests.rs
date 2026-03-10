@@ -58,7 +58,7 @@ fn test_evrpnl_instances() {
 fn make_toy_instance(max_q: f64) -> RawInstance {
     RawInstance {
         max_q,
-        t_max: Some(f64::INFINITY),
+        t_max: None,
         css: vec![RawCsDetail {
             node_id: 4,
             cs_type: 0,
