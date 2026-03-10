@@ -7,6 +7,7 @@ use serde::Deserialize;
 
 use frvcp::core::{FrvcpInstance, RawBreakpoint, RawCsDetail, RawInstance};
 use frvcp::solver::Solver;
+#[cfg(feature = "translator")]
 use frvcp::translator;
 
 #[derive(Deserialize)]
@@ -109,6 +110,7 @@ fn test_destination_cs_detour_feasibility() {
 
 /// Test translation of VRP-REP XML instance to frvcp format.
 /// Compares the translated instance against the known reference instance.
+#[cfg(feature = "translator")]
 #[test]
 fn test_translation() {
     let translated = translator::translate("instances/vrprep-instance.xml", true);
@@ -246,6 +248,7 @@ fn test_benchmark_all_instances() {
 }
 
 /// Test that translated instance produces the same solver results.
+#[cfg(feature = "translator")]
 #[test]
 fn test_translation_solver_consistency() {
     let test_data = load_test_data();
