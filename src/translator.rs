@@ -341,7 +341,7 @@ pub fn translate(from_filename: &str, depot_charging: bool) -> RawInstance {
     if depot_charging {
         let fastest = type_to_speed
             .iter()
-            .find(|(_, &rank)| rank == 0)
+            .find(|&(_, &rank)| rank == 0)
             .map(|(t, _)| t.clone())
             .expect("No charging function types found; cannot determine fastest charger for depot");
         let depot = &nodes[0];
