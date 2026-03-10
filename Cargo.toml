@@ -7,7 +7,7 @@ description = "A pure Rust implementation for solving the Fixed Route Vehicle Ch
 repository = "https://github.com/HellOwhatAs/frvcp"
 readme = "README.md"
 license = "MIT"
-keywords = ["frvcp", "vrp", "CO", "rich vrp", "evrp"]
+keywords = ["frvcp", "vrp", "CO", "rich-vrp", "evrp"]
 categories = ["algorithms", "science"]
 
 [dependencies]
