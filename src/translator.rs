@@ -1,4 +1,4 @@
-//! Translator module: converts VRP-REP XML instances to frvcpy-compatible JSON/RawInstance.
+//! Translator module: converts VRP-REP XML instances to frvcp-compatible JSON/RawInstance.
 //!
 //! This mirrors Python's `translator.py` and supports the same VRP-REP instance format.
 

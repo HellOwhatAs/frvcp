@@ -5,9 +5,9 @@ use std::time::Instant;
 use approx::assert_abs_diff_eq;
 use serde::Deserialize;
 
-use frvcpy::core::{FrvcpInstance, RawBreakpoint, RawCsDetail, RawInstance};
-use frvcpy::solver::Solver;
-use frvcpy::translator;
+use frvcp::core::{FrvcpInstance, RawBreakpoint, RawCsDetail, RawInstance};
+use frvcp::solver::Solver;
+use frvcp::translator;
 
 #[derive(Deserialize)]
 struct RouteInfo {
@@ -16,13 +16,13 @@ struct RouteInfo {
 }
 
 fn load_test_data() -> HashMap<String, RouteInfo> {
-    let data = fs::read_to_string("frvcpy/test/data/testdata.json")
+    let data = fs::read_to_string("instances/testdata.json")
         .expect("Unable to read testdata.json");
     serde_json::from_str(&data).expect("Invalid testdata JSON")
 }
 
 fn load_reference_instance() -> RawInstance {
-    let data = fs::read_to_string("frvcpy/test/data/frvcpy-instance.json")
+    let data = fs::read_to_string("instances/frvcpy-instance.json")
         .expect("Unable to read frvcpy-instance.json");
     serde_json::from_str(&data).expect("Invalid instance JSON")
 }
@@ -107,11 +107,11 @@ fn test_destination_cs_detour_feasibility() {
     assert!(duration < f64::INFINITY, "Expected finite duration");
 }
 
-/// Test translation of VRP-REP XML instance to frvcpy format.
+/// Test translation of VRP-REP XML instance to frvcp format.
 /// Compares the translated instance against the known reference instance.
 #[test]
 fn test_translation() {
-    let translated = translator::translate("frvcpy/test/data/vrprep-instance.xml", true);
+    let translated = translator::translate("instances/vrprep-instance.xml", true);
     let reference = load_reference_instance();
 
     // Compare key fields
@@ -197,7 +197,7 @@ fn test_write_solution() {
     solver.solve();
 
     let tmp_dir = std::env::temp_dir();
-    let tmp_file = tmp_dir.join("frvcpy_test_solution.xml");
+    let tmp_file = tmp_dir.join("frvcp_test_solution.xml");
     let tmp_path = tmp_file.to_str().unwrap();
     solver.write_solution(tmp_path, "test_instance");
 
@@ -249,7 +249,7 @@ fn test_benchmark_all_instances() {
 #[test]
 fn test_translation_solver_consistency() {
     let test_data = load_test_data();
-    let translated = translator::translate("frvcpy/test/data/vrprep-instance.xml", true);
+    let translated = translator::translate("instances/vrprep-instance.xml", true);
     let q_init = translated.max_q;
 
     // Test a few routes with the translated instance

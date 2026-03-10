@@ -2,12 +2,12 @@ use std::path::Path;
 use std::process;
 
 use clap::Parser;
-use frvcpy::solver::Solver;
+use frvcp::solver::Solver;
 
 #[derive(Parser)]
-#[command(name = "frvcpy", about = "Solves a Fixed Route Vehicle Charging Problem")]
+#[command(name = "frvcp", about = "Solves a Fixed Route Vehicle Charging Problem")]
 struct Cli {
-    /// Filename for the frvcpy-compatible problem instance (JSON or XML)
+    /// Filename for the frvcp-compatible problem instance (JSON or XML)
     #[arg(short, long)]
     instance: String,
 
@@ -60,7 +60,7 @@ fn main() {
     let instance = if cli.instance.ends_with(".xml") {
         eprintln!("INFO: Passed instance is an XML file. \
                    Assuming it is a VRP-REP instance and attempting to translate it...");
-        let raw = frvcpy::translator::translate(&cli.instance, true);
+        let raw = frvcp::translator::translate(&cli.instance, true);
         eprintln!("INFO: Instance translated.");
         raw
     } else {

@@ -512,7 +512,7 @@ pub struct CsBkptInfo {
 
 // ───────────────────── FrvcpInstance ─────────────────────
 
-/// An frvcpy-compliant problem instance.
+/// An frvcp-compliant problem instance.
 #[derive(Clone)]
 pub struct FrvcpInstance {
     pub energy_matrix: Vec<Vec<f64>>,
