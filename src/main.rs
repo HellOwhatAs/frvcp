@@ -85,6 +85,7 @@ fn main() {
             .unwrap_or_default();
 
         let output_filename = cli.output.unwrap_or_else(|| {
+            // Use first 4 stops of route for default filename (matches Python behavior)
             let route_substr: String = route.iter().take(4).map(|s| s.to_string()).collect::<Vec<_>>().join("");
             let q_substr = cli.qinit as i64;
             format!("{}-r{}-q{}.xml", instance_wo_ext, route_substr, q_substr)

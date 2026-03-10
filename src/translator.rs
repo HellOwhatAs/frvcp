@@ -75,8 +75,20 @@ fn get_attr(e: &BytesStart, key: &str) -> Option<String> {
 }
 
 
+/// Parsed result from a VRP-REP XML instance.
+struct ParsedVrpRep {
+    nodes: Vec<XmlNode>,
+    charging_functions: Vec<XmlChargingFunction>,
+    requests: Vec<XmlRequest>,
+    dist_type: String,
+    max_travel_time: Option<f64>,
+    speed: f64,
+    consump_rate: f64,
+    battery_capacity: f64,
+}
+
 /// Parse the entire VRP-REP XML instance.
-fn parse_vrprep_xml(xml_content: &str) -> (Vec<XmlNode>, Vec<XmlChargingFunction>, Vec<XmlRequest>, String, Option<f64>, f64, f64, f64) {
+fn parse_vrprep_xml(xml_content: &str) -> ParsedVrpRep {
     let mut reader = Reader::from_str(xml_content);
     reader.config_mut().trim_text(true);
 
@@ -279,7 +291,7 @@ fn parse_vrprep_xml(xml_content: &str) -> (Vec<XmlNode>, Vec<XmlChargingFunction
                     other => other,
                 };
             }
-            Err(e) => panic!("Error reading XML: {:?}", e),
+            Err(e) => panic!("Error parsing VRP-REP XML instance: {:?}", e),
             _ => {}
         }
         buf.clear();
@@ -293,7 +305,7 @@ fn parse_vrprep_xml(xml_content: &str) -> (Vec<XmlNode>, Vec<XmlChargingFunction
         dist_type = "euclidean".to_string();
     }
 
-    (
+    ParsedVrpRep {
         nodes,
         charging_functions,
         requests,
@@ -302,7 +314,7 @@ fn parse_vrprep_xml(xml_content: &str) -> (Vec<XmlNode>, Vec<XmlChargingFunction
         speed,
         consump_rate,
         battery_capacity,
-    )
+    }
 }
 
 // ───────────────────── Public API ─────────────────────
@@ -319,27 +331,19 @@ pub fn translate(from_filename: &str, depot_charging: bool) -> RawInstance {
     let xml_content = fs::read_to_string(from_filename)
         .unwrap_or_else(|_| panic!("Unable to read VRP-REP instance file: {}", from_filename));
 
-    let (
-        mut nodes,
-        charging_functions,
-        requests,
-        dist_type,
-        max_travel_time,
-        speed,
-        consump_rate,
-        battery_capacity,
-    ) = parse_vrprep_xml(&xml_content);
+    let parsed = parse_vrprep_xml(&xml_content);
 
     // Compute type_to_speed (speed rank): rank 0 = fastest
-    let type_to_speed = get_type_to_speed(&charging_functions);
+    let type_to_speed = get_type_to_speed(&parsed.charging_functions);
 
     // Append depot as a CS if requested
+    let mut nodes = parsed.nodes;
     if depot_charging {
         let fastest = type_to_speed
             .iter()
             .find(|(_, &rank)| rank == 0)
             .map(|(t, _)| t.clone())
-            .expect("No charging function types found");
+            .expect("No charging function types found; cannot determine fastest charger for depot");
         let depot = &nodes[0];
         let depot_cs = XmlNode {
             id: nodes.len(),
@@ -356,7 +360,7 @@ pub fn translate(from_filename: &str, depot_charging: bool) -> RawInstance {
 
     // Build process times from requests
     let mut process_times = vec![0.0_f64; nodes.len()];
-    for req in &requests {
+    for req in &parsed.requests {
         if let Some(st) = req.service_time {
             if req.node < process_times.len() {
                 process_times[req.node] = st;
@@ -377,7 +381,7 @@ pub fn translate(from_filename: &str, depot_charging: bool) -> RawInstance {
         .collect();
 
     // Build breakpoints by type
-    let breakpoints: Vec<RawBreakpoint> = charging_functions
+    let breakpoints: Vec<RawBreakpoint> = parsed.charging_functions
         .iter()
         .map(|cf| {
             let rank = *type_to_speed.get(&cf.cs_type).unwrap_or(&0);
@@ -395,14 +399,14 @@ pub fn translate(from_filename: &str, depot_charging: bool) -> RawInstance {
     let mut time_matrix = vec![vec![0.0; n]; n];
     for i in 0..n {
         for j in 0..n {
-            energy_matrix[i][j] = energy_consumed(&nodes[i], &nodes[j], consump_rate, &dist_type);
-            time_matrix[i][j] = travel_time(&nodes[i], &nodes[j], speed, &dist_type);
+            energy_matrix[i][j] = energy_consumed(&nodes[i], &nodes[j], parsed.consump_rate, &parsed.dist_type);
+            time_matrix[i][j] = travel_time(&nodes[i], &nodes[j], parsed.speed, &parsed.dist_type);
         }
     }
 
     RawInstance {
-        max_q: battery_capacity,
-        t_max: max_travel_time,
+        max_q: parsed.battery_capacity,
+        t_max: parsed.max_travel_time,
         css: css_out,
         process_times: Some(process_times),
         breakpoints_by_type: breakpoints,

@@ -196,18 +196,20 @@ fn test_write_solution() {
     let mut solver = Solver::new(instance, route_info.route.clone(), q_init, true);
     solver.solve();
 
-    let tmp_file = "/tmp/test_solution.xml";
-    solver.write_solution(tmp_file, "test_instance");
+    let tmp_dir = std::env::temp_dir();
+    let tmp_file = tmp_dir.join("frvcpy_test_solution.xml");
+    let tmp_path = tmp_file.to_str().unwrap();
+    solver.write_solution(tmp_path, "test_instance");
 
     // Verify file was created and contains expected content
-    let content = fs::read_to_string(tmp_file).expect("Could not read solution file");
+    let content = fs::read_to_string(tmp_path).expect("Could not read solution file");
     assert!(content.contains("solution"));
     assert!(content.contains("test_instance"));
     assert!(content.contains("route"));
     assert!(content.contains("node"));
 
     // Clean up
-    let _ = fs::remove_file(tmp_file);
+    let _ = fs::remove_file(tmp_path);
 }
 
 /// Benchmark test: time all 133 E-VRP-NL instances to verify efficiency.
