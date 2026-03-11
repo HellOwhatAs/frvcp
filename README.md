@@ -24,7 +24,7 @@ cargo test
 
 ## Using frvcp
 
-With a compatible instance file ([see the schema](https://github.com/e-VRO/frvcp/blob/master/instances/frvcpy-instance.schema.json)), solve the FRVCP from a Rust program:
+With a compatible instance file ([see the schema](https://github.com/e-VRO/frvcpy/blob/master/instances/frvcpy-instance.schema.json)), solve the FRVCP from a Rust program:
 
 ```rust
 use frvcp::solver::Solver;
@@ -73,7 +73,7 @@ Available CLI flags:
 
 Solutions are written in the [VRP-REP](http://www.vrp-rep.org/) format for easy importing and visualization with the [VRP-REP Mapper](https://vrp-rep.github.io/mapper/) (_formal solution specification available [here](http://www.vrp-rep.org/resources.html)_).
 
-_Note: Example problem instances are available in the `instances` directory on the [project's homepage](https://github.com/e-VRO/frvcp/). For easy access to the example files, we recommend cloning the repository._
+_Note: Example problem instances are available in the `instances` directory on the [project's homepage](https://github.com/e-VRO/frvcpy/). For easy access to the example files, we recommend cloning the repository._
 
 ## Instance Translation
 
@@ -103,7 +103,7 @@ frvcp's translator assumes VRP-REP instances are formatted similarly to the [Mon
 - These `function` elements are part of a `charging_functions` element in a `vehicle_profile`'s `custom` element
 - The depot has node ID 0, the N customers have IDs {1, ..., N}, and the CSs have IDs {N+1, ..., N+C}
 
-A good example of such an instance is the [example VRP-REP instance in the repository](https://github.com/e-VRO/frvcp/blob/master/instances/vrprep-instance.xml).
+A good example of such an instance is the [example VRP-REP instance in the repository](https://github.com/e-VRO/frvcpy/blob/master/instances/vrprep-instance.xml).
 
 Here is a smaller example meeting these requirements:
 
